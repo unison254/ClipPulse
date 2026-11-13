@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">ClipPulse</string>
+    <string name="auth_headline">Turn Any YouTube URL Into Viral Shorts</string>
+    <string name="auth_subheadline">AI pinpoints high-retention hooks, writes timed captions, and lets you style every frame.</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="cd_hero_banner">ClipPulse viral video editing studio artwork</string>
+    <string name="cd_sign_out">Sign out</string>
+    <string name="cd_back">Navigate back</string>
+    <string name="cd_delete_project">Delete project</string>
+    <string name="cd_paste_url">Paste YouTube URL</string>
+    <string name="cd_play_pause">Play or pause preview</string>
+    <string name="cd_save_clip">Save clip changes</string>
+    <string name="cd_export_srt">Export SRT caption file</string>
+    <string name="cd_share_copy">Share viral clip post</string>
+</resources>

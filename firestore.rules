@@ -1,0 +1,180 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidClipProject(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.userId.size() >= 1 &&
+             data.userId.size() <= 128 &&
+             data.youtubeUrl is string &&
+             data.youtubeUrl.size() >= 1 &&
+             data.youtubeUrl.size() <= 500 &&
+             data.videoId is string &&
+             data.videoId.size() >= 1 &&
+             data.videoId.size() <= 64 &&
+             data.videoTitle is string &&
+             data.videoTitle.size() >= 1 &&
+             data.videoTitle.size() <= 300 &&
+             data.channelName is string &&
+             data.channelName.size() >= 1 &&
+             data.channelName.size() <= 200 &&
+             data.thumbnailUrl is string &&
+             data.thumbnailUrl.size() <= 500 &&
+             data.videoSummary is string &&
+             data.videoSummary.size() <= 2000 &&
+             data.clipCount is int &&
+             data.clipCount >= 0 &&
+             data.clipCount <= 50 &&
+             data.createdAt is timestamp &&
+             data.createdAt <= request.time &&
+             data.updatedAt is timestamp &&
+             data.updatedAt <= request.time;
+    }
+
+    function isValidViralClip(data, userId, projectId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.userId.size() >= 1 &&
+             data.userId.size() <= 128 &&
+             data.projectId is string &&
+             data.projectId == projectId &&
+             data.projectId.size() >= 1 &&
+             data.projectId.size() <= 128 &&
+             data.title is string &&
+             data.title.size() >= 1 &&
+             data.title.size() <= 200 &&
+             data.hookLine is string &&
+             data.hookLine.size() <= 300 &&
+             data.startSeconds is int &&
+             data.startSeconds >= 0 &&
+             data.startSeconds <= 86400 &&
+             data.endSeconds is int &&
+             data.endSeconds > data.startSeconds &&
+             data.endSeconds <= 86400 &&
+             data.viralScore is int &&
+             data.viralScore >= 0 &&
+             data.viralScore <= 100 &&
+             data.viralReason is string &&
+             data.viralReason.size() <= 1000 &&
+             data.captionStyle is string &&
+             data.captionStyle.size() <= 40 &&
+             data.captionStyle in ['HORMOZI_POP', 'CLEAN_GLASS', 'NEON_PULSE', 'EDITORIAL'] &&
+             data.captionPosition is string &&
+             data.captionPosition.size() <= 20 &&
+             data.captionPosition in ['BOTTOM', 'CENTER', 'TOP'] &&
+             (data.captionScale is float || data.captionScale is int) &&
+             data.captionScale >= 0.6 &&
+             data.captionScale <= 2.0 &&
+             data.uppercaseCaptions is bool &&
+             data.captions is list &&
+             data.captions.size() <= 100 &&
+             (data.captions.size() == 0 || data.captions[0] is map) &&
+             data.hashtags is list &&
+             data.hashtags.size() <= 15 &&
+             (data.hashtags.size() == 0 || data.hashtags[0] is string) &&
+             data.createdAt is timestamp &&
+             data.createdAt <= request.time &&
+             data.updatedAt is timestamp &&
+             data.updatedAt <= request.time;
+    }
+
+    match /users/{userId}/projects/{projectId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(projectId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(projectId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'youtubeUrl', 'videoId', 'videoTitle',
+                         'channelName', 'thumbnailUrl', 'videoSummary',
+                         'clipCount', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'youtubeUrl', 'videoId', 'videoTitle',
+                         'channelName', 'thumbnailUrl', 'videoSummary',
+                         'clipCount', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidClipProject(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(projectId) &&
+                       isValidClipProject(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'videoTitle', 'channelName', 'thumbnailUrl',
+                         'videoSummary', 'clipCount', 'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(projectId);
+
+      match /clips/{clipId} {
+        allow list: if isOwner(userId) && isValidId(projectId);
+        allow get: if isOwner(userId) && isValidId(projectId) && isValidId(clipId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(projectId) &&
+                         isValidId(clipId) &&
+                         (exists(/databases/$(database)/documents/users/$(userId)/projects/$(projectId)) ||
+                          existsAfter(/databases/$(database)/documents/users/$(userId)/projects/$(projectId))) &&
+                         incoming().keys().hasAll([
+                           'userId', 'projectId', 'title', 'hookLine',
+                           'startSeconds', 'endSeconds', 'viralScore', 'viralReason',
+                           'captionStyle', 'captionPosition', 'captionScale',
+                           'uppercaseCaptions', 'captions', 'hashtags',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'projectId', 'title', 'hookLine',
+                           'startSeconds', 'endSeconds', 'viralScore', 'viralReason',
+                           'captionStyle', 'captionPosition', 'captionScale',
+                           'uppercaseCaptions', 'captions', 'hashtags',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidViralClip(incoming(), userId, projectId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(projectId) &&
+                         isValidId(clipId) &&
+                         isValidViralClip(incoming(), userId, projectId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().projectId == existing().projectId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'title', 'hookLine', 'startSeconds', 'endSeconds',
+                           'captionStyle', 'captionPosition', 'captionScale',
+                           'uppercaseCaptions', 'captions', 'hashtags', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(projectId) && isValidId(clipId);
+      }
+    }
+  }
+}

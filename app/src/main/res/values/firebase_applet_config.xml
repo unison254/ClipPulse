@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<resources>
+    <string name="firestore_database_id" translatable="false">ai-studio-android-clippuls-53bfcb0d-44b4-46ac-a67d-b27a6e77850e</string>
+    <string name="recaptcha_site_key" translatable="false">6LcftR4uAAAAAM5-8N6x9yjKxgf_lqGJ4g4xvfvd</string>
+</resources>

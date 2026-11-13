@@ -1,0 +1,168 @@
+{
+  "entities": {
+    "ClipProject": {
+      "title": "ClipProject",
+      "description": "A YouTube video analysis project containing viral clip suggestions and captions.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "youtubeUrl": {
+          "type": "string",
+          "description": "Canonical YouTube URL submitted by the user."
+        },
+        "videoId": {
+          "type": "string",
+          "description": "Parsed 11-character YouTube video ID."
+        },
+        "videoTitle": {
+          "type": "string",
+          "description": "Title of the source YouTube video."
+        },
+        "channelName": {
+          "type": "string",
+          "description": "YouTube channel or creator name."
+        },
+        "thumbnailUrl": {
+          "type": "string",
+          "description": "Thumbnail image URL for the YouTube video."
+        },
+        "videoSummary": {
+          "type": "string",
+          "description": "AI-generated summary of the video's viral potential."
+        },
+        "clipCount": {
+          "type": "integer",
+          "description": "Number of viral clips in this project."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last-updated timestamp (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "youtubeUrl",
+        "videoId",
+        "videoTitle",
+        "channelName",
+        "thumbnailUrl",
+        "videoSummary",
+        "clipCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ViralClip": {
+      "title": "ViralClip",
+      "description": "A short-form viral clip segment extracted from a YouTube project with timed customizable captions.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "projectId": {
+          "type": "string",
+          "description": "Parent ClipProject document ID."
+        },
+        "title": {
+          "type": "string",
+          "description": "Punchy short-form clip title."
+        },
+        "hookLine": {
+          "type": "string",
+          "description": "Opening 3-second hook overlay text."
+        },
+        "startSeconds": {
+          "type": "integer",
+          "description": "Clip start timestamp in seconds."
+        },
+        "endSeconds": {
+          "type": "integer",
+          "description": "Clip end timestamp in seconds."
+        },
+        "viralScore": {
+          "type": "integer",
+          "description": "Estimated viral score from 0 to 100."
+        },
+        "viralReason": {
+          "type": "string",
+          "description": "AI explanation of why this clip is engaging."
+        },
+        "captionStyle": {
+          "type": "string",
+          "enum": ["HORMOZI_POP", "CLEAN_GLASS", "NEON_PULSE", "EDITORIAL"],
+          "description": "Selected caption visual preset."
+        },
+        "captionPosition": {
+          "type": "string",
+          "enum": ["BOTTOM", "CENTER", "TOP"],
+          "description": "Vertical placement of captions inside the 9:16 preview."
+        },
+        "captionScale": {
+          "type": "number",
+          "description": "Caption font scale multiplier."
+        },
+        "uppercaseCaptions": {
+          "type": "boolean",
+          "description": "Whether captions render in uppercase."
+        },
+        "captions": {
+          "type": "array",
+          "description": "Bounded list (<= 100) of timed caption cue objects."
+        },
+        "hashtags": {
+          "type": "array",
+          "description": "Bounded list (<= 15) of hashtag strings."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last-updated timestamp (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "projectId",
+        "title",
+        "hookLine",
+        "startSeconds",
+        "endSeconds",
+        "viralScore",
+        "viralReason",
+        "captionStyle",
+        "captionPosition",
+        "captionScale",
+        "uppercaseCaptions",
+        "captions",
+        "hashtags",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/ClipProject" },
+      "description": "Stores each user's YouTube video clip projects."
+    },
+    "/users/{userId}/projects/{projectId}/clips/{clipId}": {
+      "schema": { "$ref": "#/entities/ViralClip" },
+      "description": "Stores viral clip segments and editable timed captions for a project."
+    }
+  }
+}
